@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="keywords" content="">
+    <meta name="description" content="">
+    <title>BMS 后台模板</title>
+    <link rel="shortcut icon" href="favicon.ico">
+    <link href="http://static.dev.zhixike.net/lib/bootstrap-3.3.7/css/bootstrap.css" rel="stylesheet">
+    <link href="http://static.dev.zhixike.net/lib/font-awesome-4.6.3/css/font-awesome.min.css" rel="stylesheet">
+    <link href="assets/bms/index.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <!--头部导航开始-->
+    <div class="head-navigation">
+        <div class="head-logo">
+            <img src="./logo2.png" />
+            <span>运营管理后台</span>
+        </div>
+        <div class="head-title"></div>
+        <!--个人信息-->
+        <div class="head-profile">
+            <a id="username" href="#">admin</a>
+
+            <a href="/logout">退出</a>
+        </div>
+    </div>
+    <!--头部导航结束-->
+    <!--左侧导航开始-->
+    <div class="left-sidebar">
+        <!--菜单栏-->
+        <div class="left-menu"></div>
+    </div>
+    <!--左侧导航结束-->
+    <!--内嵌页开始-->
+    <div class="page-middle">
+        <!--右侧menu开始-->
+        <div class="right-menu">
+            <div class="fa fa-backward tabs-scroller-left"></div>
+            <div class="fa fa-forward tabs-scroller-right"></div>
+            <ul>
+            </ul>
+        </div>
+        <!--右侧menu结束-->
+        <div class="right-container"></div>
+    </div>
+    <!--内嵌页结束-->
+    <script src="http://static.dev.zhixike.net/lib/jquery/jquery-1.12.0.min.js"></script>
+    <script id='script' src="http://static.dev.zhixike.net/lib/bootstrap-3.3.7/js/bootstrap.js"></script>
+    <script src="assets/bms/index.min.js"></script>
+    <script>
+        function getCookie(cname) {
+            var name = cname + "=";
+            var ca = document.cookie.split(';');
+            for (var i = 0; i < ca.length; i++) {
+                var c = ca[i].trim();
+                if (c.indexOf(name) == 0) { return c.substring(name.length, c.length); }
+            }
+            return "";
+        }
+
+        function parseJwt(token) {
+
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace('-', '+').replace('_', '/');
+            return JSON.parse(window.atob(base64));
+        }
+
+        //var jwt = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC8xLmJhY2suYXBwbGluemkuY29tXC8iLCJhdWQiOiJyZWZpbmUuY29tIiwiaWF0IjoxNTQzOTk1MDE5LCJuYmYiOjE1NDM5OTUwMTksImV4cCI6MTU0NDAwMjIxOSwiZGF0YSI6eyJ1c2VyaWQiOiIxMTIzMTIzMTIzNCIsInVzZXJuYW1lIjoiZGFpamlubWluZyIsIm5pY2tuYW1lIjoiXHU2NzRlXHU1YzBmXHU5Zjk5In19.4Flo7Xt4VMDd3ZG_awgeaMBJn7Vc0qddP1AtlIJ1vaU";
+        
+        var token = getCookie("jwt");
+        if (!token) {
+            window.location.href = "login.html";
+        }
+        else {
+            console.log(token);
+            var obj = parseJwt(token);
+            console.log(obj);
+            //document.write("当前登录人员:" + obj.data.nickname);
+            console.log(obj.data.nickname);
+            $("#username").text(obj.data.nickname);
+            
+        }
+        
+
+        var appURL = "/app";
+        var appmenuURL = "/appmenu";
+        
+        $.ajax({
+                type: "post",
+                url: appURL,
+                dataType: "json",
+                success: function (result) {
+
+                    if (result.success) {
+                        
+                       var rightmenuJSON = result.data;
+                       rightmenu.initMenu(rightmenuJSON);
+                       
+                       if(rightmenuJSON.length > 0)
+                        {
+                            openIframe(rightmenuJSON[0].url)
+                            loadLeftMenu(rightmenuJSON[0].id);
+                        }
+                    }
+                    else {
+                        alert(result.message);
+                    }
+                }
+            });
+
+
+        
+        //点击右侧菜单动态添加左侧菜单
+        $('body').on('click', '.right-menu>ul>li>a', function () {            
+
+            var id = $(".right-menu>ul>li>a[class=active]").attr("id");
+            console.log(id);
+
+            openIframe($(".right-menu>ul>li>a[class=active]").attr("href"));
+
+            loadLeftMenu(id);
+            
+        });
+
+        
+        //点击右侧菜单
+
+        //异步默认打开第一个iframe
+        function loadLeftMenu(appid)
+        {
+
+            $.ajax({
+                type: "post",
+                url: appmenuURL,
+                dataType: "json",
+                data: { appid :appid },
+                success: function (result) {
+
+                    if (result.success) {
+                        
+                       var leftmenujson = result.data;
+                       
+                       leftmenu.initMenu(leftmenujson);
+                    
+
+                    }
+                    else {
+                        alert(result.message);
+                    }
+                }
+            });
+            
+
+        }
+
+    </script>
+</body>
+
+</html>
